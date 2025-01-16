@@ -1,8 +1,8 @@
 package com.yeshuwahane.pokedex.data.network
 
-import com.yeshuwahane.pokedex.data.model.PokemonDetailResponse
 import com.yeshuwahane.pokedex.data.model.PokemonResponse
 import com.yeshuwahane.pokedex.data.model.PokemonSpeciesResponse
+import com.yeshuwahane.pokedex.data.model.pokemondetailresponse.PokemonDetailResponse
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query

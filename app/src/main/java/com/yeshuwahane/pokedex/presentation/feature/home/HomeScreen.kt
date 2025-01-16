@@ -1,5 +1,6 @@
 package com.yeshuwahane.pokedex.presentation.feature.home
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -43,6 +44,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import coil3.compose.rememberAsyncImagePainter
 import com.yeshuwahane.pokedex.R
+import com.yeshuwahane.pokedex.data.util.DataResource
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
@@ -50,9 +52,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun HomeScreen(navController: NavController) {
     val viewModel = hiltViewModel<HomeViewModel>()
-    val featuredPokemon = viewModel.featuredPokemonState.collectAsStateWithLifecycle()
-    val newestPokemon = viewModel.newestPokemonState.collectAsStateWithLifecycle()
-    val trendingPokemon = viewModel.trendingPokemonState.collectAsStateWithLifecycle()
+    val featuredPokemon by viewModel.featuredPokemonState.collectAsStateWithLifecycle()
+    val newestPokemon by viewModel.newestPokemonState.collectAsStateWithLifecycle()
+    val trendingPokemon by viewModel.trendingPokemonState.collectAsStateWithLifecycle()
 
     val tabs = listOf("Popular", "Trending", "Newest")
     val pagerState = rememberPagerState(
@@ -120,16 +122,18 @@ fun HomeScreen(navController: NavController) {
         ) { page ->
             when (page) {
                 0 -> PokemonListScreen(
-                    featuredPokemon,
+                    featuredPokemon.pokemonList,
                     selectedPokemon,
                     { selectedPokemon = it },
                     navigateToDetailScreen = {
+                        Log.d("homeScreen","id: $it")
                         navController.navigate("detail/$it")
+
                     }
                 )
 
                 1 -> PokemonListScreen(
-                    trendingPokemon,
+                    trendingPokemon.pokemonList,
                     selectedPokemon,
                     { selectedPokemon = it },
                     navigateToDetailScreen = {
@@ -137,7 +141,7 @@ fun HomeScreen(navController: NavController) {
                     })
 
                 2 -> PokemonListScreen(
-                    newestPokemon,
+                    newestPokemon.pokemonList,
                     selectedPokemon,
                     { selectedPokemon = it },
                     navigateToDetailScreen = {
@@ -151,12 +155,12 @@ fun HomeScreen(navController: NavController) {
 
 @Composable
 fun PokemonListScreen(
-    pokemonListState: State<PokemonListState>,
+    pokemonListState: DataResource<List<PokemonState>>,
     selectedPokemon: PokemonState?,
     onPokemonClick: (PokemonState) -> Unit,
-    navigateToDetailScreen: (id: String) -> Unit
+    navigateToDetailScreen: (id: Int) -> Unit
 ) {
-    val resource = pokemonListState.value.pokemonList
+    val resource = pokemonListState
 
     if (resource.isLoading()) {
         // Loading state

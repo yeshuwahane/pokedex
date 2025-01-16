@@ -1,8 +1,8 @@
 package com.yeshuwahane.pokedex.data.mapper
 
 import com.yeshuwahane.pokedex.data.model.Pokemon
-import com.yeshuwahane.pokedex.data.model.PokemonDetailResponse
 import com.yeshuwahane.pokedex.data.model.PokemonSpeciesResponse
+import com.yeshuwahane.pokedex.data.model.pokemondetailresponse.PokemonDetailResponse
 import com.yeshuwahane.pokedex.presentation.feature.detailscreen.DetailState
 import com.yeshuwahane.pokedex.presentation.feature.detailscreen.PokemonDetailState
 import com.yeshuwahane.pokedex.presentation.feature.detailscreen.StatDetail
@@ -36,10 +36,10 @@ fun PokemonDetailResponse.toDetailState(species: PokemonSpeciesResponse): Detail
         stats = stats.map {
             StatDetail(
                 name = it.stat.name.replaceFirstChar { it.uppercase() },
-                value = it.base_stat
+                value = it.baseStat
             )
         },
-        spriteUrl = sprites.other.official_artwork.front_default,
+        spriteUrl = sprites.other.home.frontDefault,
         species = englishGenus,
         description = englishFlavorText.replace("\n", " ")
     )

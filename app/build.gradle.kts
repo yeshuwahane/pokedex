@@ -59,9 +59,18 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
+    //icons
+    implementation ("androidx.compose.material:material-icons-extended:1.7.6")
+
+
     // viewpager
         implementation ("com.google.accompanist:accompanist-pager:0.32.0")
         implementation ("com.google.accompanist:accompanist-pager-indicators:0.32.0")
+
+    // Logger
+    debugImplementation("com.github.chuckerteam.chucker:library:4.0.0")
+    releaseImplementation("com.github.chuckerteam.chucker:library-no-op:4.0.0")
+    implementation(libs.logging.interceptor)
 
 
     //coil

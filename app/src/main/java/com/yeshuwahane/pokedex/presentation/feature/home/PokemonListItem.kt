@@ -29,6 +29,8 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.dp
 import coil3.compose.rememberAsyncImagePainter
 import java.util.Locale
@@ -40,7 +42,7 @@ fun PokemonListItem(
     pokemon: PokemonState,
     isSelected: Boolean,
     onClick: () -> Unit,
-    navigateToDetailScreen: (id: String) -> Unit
+    navigateToDetailScreen: (id: Int) -> Unit
 ) {
     // Apply selected background color
     val cardBackgroundColor = if (isSelected) {
@@ -49,11 +51,7 @@ fun PokemonListItem(
         Color.Black // Default background for unselected items
     }
 
-    val pokemonImage = if (isSelected){
-        pokemon.gif
-    } else{
-        pokemon.icon
-    }
+    val pokemonImage = pokemon.gif
 
     Card(
         modifier = Modifier
@@ -61,10 +59,7 @@ fun PokemonListItem(
             .padding(16.dp)
             .combinedClickable(
                 enabled = true,
-                onClick = { onClick() },
-                onLongClick = {
-                    navigateToDetailScreen.invoke(pokemon.id)
-                }
+                onClick = { navigateToDetailScreen.invoke(pokemon.id) },
             )
             .background(cardBackgroundColor)
             .clip(RoundedCornerShape(8.dp)),
@@ -86,22 +81,19 @@ fun PokemonListItem(
                 contentScale = ContentScale.Fit
             )
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(26.dp))
 
             // Pokémon name and URL
             Column(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = pokemon.name,
+                    text = pokemon.name.uppercase(),
                     style = MaterialTheme.typography.headlineSmall,
-                    color = if (isSelected) Color.White else Color.Gray
+                    color = if (isSelected) Color.White else Color.Gray,
+                    textAlign = TextAlign.Center
                 )
-                Text(
-                    text = pokemon.url, // Assuming this could be some additional detail
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (isSelected) Color.White else Color.Gray
-                )
+
             }
         }
     }

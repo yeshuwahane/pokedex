@@ -1,5 +1,6 @@
 package com.yeshuwahane.pokedex.data.repositoryimpl
 
+import android.util.Log
 import com.yeshuwahane.pokedex.data.mapper.toDetailState
 import com.yeshuwahane.pokedex.data.mapper.toPokemonUiState
 import com.yeshuwahane.pokedex.data.model.Pokemon
@@ -30,6 +31,7 @@ class PokemonRepositoryImpl @Inject constructor(private val api: PokemonApi): Po
             val detailResponse = api.getPokemonDetails(id)
             val speciesResponse = api.getPokemonSpecies(id)
             val pokemonDetail = detailResponse.toDetailState(speciesResponse)
+            Log.d("repos", "getPokemonDetails: $pokemonDetail")
             Response.success(pokemonDetail)
         }
     }
