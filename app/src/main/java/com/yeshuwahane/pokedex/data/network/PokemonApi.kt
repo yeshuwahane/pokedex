@@ -1,5 +1,6 @@
 package com.yeshuwahane.pokedex.data.network
 
+import com.yeshuwahane.pokedex.data.model.EvolutionChainResponse
 import com.yeshuwahane.pokedex.data.model.PokemonResponse
 import com.yeshuwahane.pokedex.data.model.PokemonSpeciesResponse
 import com.yeshuwahane.pokedex.data.model.pokemondetailresponse.PokemonDetailResponse
@@ -17,4 +18,7 @@ interface PokemonApi {
 
     @GET("pokemon-species/{id}")
     suspend fun getPokemonSpecies(@Path("id") id: Int): PokemonSpeciesResponse
+
+    @GET("evolution-chain/{id}")
+    suspend fun getEvolutionChain(@Path("id") id: Int): EvolutionChainResponse
 }

@@ -15,10 +15,16 @@ data class DetailState(
     val stats: List<StatDetail>, // List of stats like HP, Attack, Defense
     val spriteUrl: String,   // URL to Pokémon image
     val species: String,     // Pokémon species description
-    val description: String  // Pokémon description
+    val description: String, // Pokémon description
+    val moves: List<String>, // List of Pokémon moves (e.g., "Tackle", "Growl")
+    val legacySoundUrl: String,   // URL to the Pokémon's cry/sound
+    val latestSoundUrl: String     // URL to the Pokémon's cry/sound
+
 )
 
 data class StatDetail(
     val name: String,        // Stat name (e.g., "HP", "Attack")
     val value: Int           // Base stat value
 )
+
+
