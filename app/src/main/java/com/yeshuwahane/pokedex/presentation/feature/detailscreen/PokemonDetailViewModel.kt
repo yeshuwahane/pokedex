@@ -25,6 +25,9 @@ class PokemonDetailViewModel @Inject constructor(
     private val _pokemonDetailState = MutableStateFlow(PokemonDetailState(DataResource.initial()))
     val pokemonDetailState = _pokemonDetailState.asStateFlow()
 
+    private val _soundError = MutableStateFlow<String?>(null)
+    val soundError = _soundError.asStateFlow()
+
 
     fun getPokemonDetail(id: Int) {
         viewModelScope.launch {
@@ -37,7 +40,13 @@ class PokemonDetailViewModel @Inject constructor(
     }
 
     fun playSound(soundUrl: String) {
-        playSoundUseCase.execute(soundUrl)
+        playSoundUseCase.execute(soundUrl) { errorMessage ->
+            _soundError.value = errorMessage
+        }
+    }
+
+    fun clearError() {
+        _soundError.value = null
     }
 
 

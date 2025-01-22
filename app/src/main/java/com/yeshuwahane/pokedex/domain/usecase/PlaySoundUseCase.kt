@@ -6,7 +6,7 @@ import javax.inject.Inject
 
 
 class PlaySoundUseCase @Inject constructor() {
-    fun execute(soundUrl: String) {
+    fun execute(soundUrl: String, onFailure: (String) -> Unit) {
         try {
             val mediaPlayer = MediaPlayer().apply {
                 setDataSource(soundUrl) // Set the sound URL
@@ -21,10 +21,12 @@ class PlaySoundUseCase @Inject constructor() {
             mediaPlayer.setOnErrorListener { _, what, extra ->
                 Log.e("PlaySound", "Error during playback: what=$what, extra=$extra")
                 mediaPlayer.release()
+                onFailure("Playback error: what=$what, extra=$extra") // Notify failure
                 true
             }
         } catch (e: Exception) {
             Log.e("PlaySound", "Error initializing MediaPlayer: ${e.message}", e)
+            onFailure("Error initializing MediaPlayer: ${e.message}")
         }
     }
 }

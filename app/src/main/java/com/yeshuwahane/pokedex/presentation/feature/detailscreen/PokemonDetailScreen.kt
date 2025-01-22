@@ -25,6 +25,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.LinearProgressIndicator
+import androidx.compose.material.SnackbarHost
+import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.TabRow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -38,6 +40,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -67,52 +70,74 @@ fun PokemonDetailScreen(
 ) {
     val viewModel = hiltViewModel<PokemonDetailViewModel>()
     val pokemonDetail by viewModel.pokemonDetailState.collectAsStateWithLifecycle()
+    val soundError by viewModel.soundError.collectAsStateWithLifecycle()
     val uiState = pokemonDetail.detailState.data
 
     // State to manage whether GIF or static sprite is displayed
     var showGif by remember { mutableStateOf(false) }
 
+    // Snackbar Host State
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(soundError) {
+        if (soundError != null) {
+            coroutineScope.launch {
+                snackbarHostState.showSnackbar(soundError!!)
+                viewModel.clearError()
+            }
+        }
+    }
+
     LaunchedEffect(id) {
         viewModel.getPokemonDetail(id)
     }
 
-    // Main layout
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black)
-    ) {
-        // Top Bar
-        DetailTopBar(onBackClick, showGif) { showGif = !showGif }
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { paddingValues->
 
-        if (uiState != null) {
-            // Pokémon Detail Content
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-            ) {
-                PokemonDetailContent(
-                    uiState,
-                    showGif,
-                    playSound = {
-                        viewModel.playSound(it)
-                    }
-                )
+        // Main layout
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(Color.Black)
+        ) {
+            // Top Bar
+            DetailTopBar(onBackClick, showGif) { showGif = !showGif }
 
-                Spacer(modifier = Modifier.height(16.dp))
+            if (uiState != null) {
+                // Pokémon Detail Content
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    PokemonDetailContent(
+                        uiState,
+                        showGif,
+                        playSound = {
+                            viewModel.playSound(it)
+                        }
+                    )
 
-            }
-        } else {
-            // Placeholder content while loading or if data is not available
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(color = Color.White)
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                }
+            } else {
+                // Placeholder content while loading or if data is not available
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color.White)
+                }
             }
         }
     }
+
+
 }
 
 @Composable
