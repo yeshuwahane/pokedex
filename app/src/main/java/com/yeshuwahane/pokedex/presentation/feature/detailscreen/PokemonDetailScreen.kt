@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -30,6 +32,8 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.VideoLibrary
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -48,9 +52,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.rememberAsyncImagePainter
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 
 
 @Composable
@@ -74,23 +81,32 @@ fun PokemonDetailScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState())
     ) {
-
         // Top Bar
         DetailTopBar(onBackClick, showGif) { showGif = !showGif }
 
         if (uiState != null) {
             // Pokémon Detail Content
-            pokemonDetail.detailState.data?.let {
-                PokemonDetailContent(it, showGif)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                PokemonDetailContent(
+                    uiState,
+                    showGif,
+                    playSound = {
+                        viewModel.playSound(it)
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
             }
         } else {
             // Placeholder content while loading or if data is not available
             Box(
-                modifier = Modifier
-                    .fillMaxSize(),
+                modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator(color = Color.White)
@@ -130,32 +146,35 @@ fun DetailTopBar(
     }
 }
 
-
-
 @SuppressLint("SuspiciousIndentation")
 @Composable
-fun PokemonDetailContent(detailState: DetailState, showGif: Boolean) {
+fun PokemonDetailContent(detailState: DetailState, showGif: Boolean, playSound: (String) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        val gifUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${detailState.id}.gif"
+        val coroutineScope = rememberCoroutineScope()
+        var selectedTabIndex by remember { mutableIntStateOf(0) }
+        val tabTitles = listOf("Stats", "Moves", "Sounds")
+        // Pager State for swipeable tabs
+        val pagerState = rememberPagerState(initialPage = 0, pageCount = { tabTitles.size })
 
-            Image(
-                painter = rememberAsyncImagePainter(if (showGif) gifUrl else detailState.spriteUrl),
-                contentDescription = "${detailState.name} Sprite",
-                modifier = Modifier
-                    .size(200.dp)
-                    .align(Alignment.CenterHorizontally)
-            )
+        val gifUrl =
+            "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${detailState.id}.gif"
 
         // Pokémon Image
-
+        Image(
+            painter = rememberAsyncImagePainter(if (showGif) gifUrl else detailState.spriteUrl),
+            contentDescription = "${detailState.name} Sprite",
+            modifier = Modifier
+                .size(200.dp)
+                .align(Alignment.CenterHorizontally)
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Pokémon Name and ID
+        // Pokémon Name
         Text(
             text = detailState.name,
             style = MaterialTheme.typography.headlineMedium,
@@ -193,25 +212,60 @@ fun PokemonDetailContent(detailState: DetailState, showGif: Boolean) {
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
+        // Tabs
+        TabRow(
+            selectedTabIndex = pagerState.currentPage,
+            backgroundColor = Color.Black,
+            contentColor = Color.White
+        ) {
+            tabTitles.forEachIndexed { index, title ->
+                Tab(
+                    selected = pagerState.currentPage == index,
+                    onClick = {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(index)
+                        }
+                    },
+                    text = { Text(title, style = MaterialTheme.typography.bodySmall) }
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize()
+        ) { page ->
+            // Tab Content
+            when (page) {
+                0 -> StatsTab(
+                    detailState.stats,
+                    weight = detailState.weight,
+                    height = detailState.height
+                )
+
+                1 -> MovesTab(detailState.moves)
+                2 -> SoundsTab(
+                    legacySoundUrl = detailState.legacySoundUrl,
+                    latestSoundUrl = detailState.latestSoundUrl,
+                    playSound = { playSound.invoke(it) }
+                )
+            }
+        }
+
+
         // Stats Section
-        PokemonStats(detailState.stats)
+//        PokemonStats(detailState.stats)
 
         Spacer(modifier = Modifier.height(16.dp))
 
         // Weight and Height
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            DetailMetric("Weight", "${detailState.weight} kg")
-            DetailMetric("Height", "${detailState.height} m")
-        }
+
     }
 }
 
-
 @Composable
-fun PokemonStats(stats: List<StatDetail>) {
+fun PokemonStats(stats: List<StatDetail>, weight: Float, height: Float) {
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -246,13 +300,13 @@ fun PokemonStats(stats: List<StatDetail>) {
                     animatedProgress.animateTo(
                         targetValue = stat.value / 100f, // Assuming max value is 100
                         animationSpec = tween(
-                            durationMillis = 1500, // Smooth 1.5-second duration
+                            durationMillis = 1500,
                             easing = FastOutSlowInEasing
                         )
                     )
                 }
 
-                // LinearProgressIndicator with animated progress
+                // Progress Bar
                 LinearProgressIndicator(
                     progress = animatedProgress.value,
                     color = Color.Green,
@@ -265,40 +319,139 @@ fun PokemonStats(stats: List<StatDetail>) {
 
                 Spacer(modifier = Modifier.width(8.dp))
 
-                // Display stat value synchronized with progress
+                // Stat Value
                 Text(
-                    text = (animatedProgress.value * 100).toInt()
-                        .toString(), // Convert progress to stat value
+                    text = (animatedProgress.value * 100).toInt().toString(),
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.White
                 )
             }
         }
+
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            DetailMetric("Weight", "$weight kg")
+            DetailMetric("Height", "$height m")
+        }
+
     }
 }
-
 
 @Composable
 fun DetailMetric(title: String, value: String) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .padding(8.dp)
+        modifier = Modifier.padding(8.dp)
     ) {
         Text(
             text = title,
             style = MaterialTheme.typography.bodySmall,
-            color = Color.Gray,
-            modifier = Modifier
-                .weight(1f)
+            color = Color.Gray
         )
         Text(
             text = value,
             style = MaterialTheme.typography.titleSmall,
-            color = Color.White,
-            modifier = Modifier
-                .weight(1f)
+            color = Color.White
         )
+    }
+}
+
+
+@Composable
+fun AboutTab(detailState: DetailState) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        Text(
+            text = "About ${detailState.name}",
+            style = MaterialTheme.typography.titleLarge,
+            color = Color.White
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = detailState.description,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Gray
+        )
+
+
+    }
+}
+
+@Composable
+fun StatsTab(stats: List<StatDetail>, weight: Float, height: Float) {
+    PokemonStats(stats, weight, height)
+}
+
+@Composable
+fun MovesTab(moves: List<String>) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        Text(
+            text = "Moves",
+            style = MaterialTheme.typography.titleLarge,
+            color = Color.White
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        moves.forEach { move ->
+            Text(
+                text = move,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Gray,
+                modifier = Modifier.padding(vertical = 4.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun SoundsTab(legacySoundUrl: String, latestSoundUrl: String, playSound: (String) -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Sounds",
+            style = MaterialTheme.typography.titleLarge,
+            color = Color.White
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Legacy Sound",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Gray
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Button(
+            onClick = { playSound(legacySoundUrl) },
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
+        ) {
+            Text(text = "Play Legacy Sound", color = Color.White)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "Latest Sound",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Gray
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Button(
+            onClick = { playSound(latestSoundUrl) },
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
+        ) {
+            Text(text = "Play Latest Sound", color = Color.White)
+        }
     }
 }
 

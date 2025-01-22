@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yeshuwahane.pokedex.data.repositoryimpl.PokemonRepositoryImpl
 import com.yeshuwahane.pokedex.data.util.DataResource
+import com.yeshuwahane.pokedex.domain.usecase.PlaySoundUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -17,7 +18,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class PokemonDetailViewModel @Inject constructor(
-    val repository: PokemonRepositoryImpl
+    val repository: PokemonRepositoryImpl,
+    val playSoundUseCase: PlaySoundUseCase
 ) : ViewModel() {
 
     private val _pokemonDetailState = MutableStateFlow(PokemonDetailState(DataResource.initial()))
@@ -32,6 +34,10 @@ class PokemonDetailViewModel @Inject constructor(
                 it.copy(pokemonDetail)
             }
         }
+    }
+
+    fun playSound(soundUrl: String) {
+        playSoundUseCase.execute(soundUrl)
     }
 
 
